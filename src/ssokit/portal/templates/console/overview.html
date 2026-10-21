@@ -1,0 +1,49 @@
+{% extends "console/layout.html" %}
+{% block title %}Launches{% endblock %}
+{% block content %}
+<div class="cpage__head">
+  <div><h1>Launches</h1><p>Every SSO launch attempt from the last 24 hours, newest first.</p></div>
+  <a class="btn" href="/console{% if f_tenant or f_status %}?{% if f_tenant %}tenant={{ f_tenant }}{% endif %}{% if f_status %}&status={{ f_status }}{% endif %}{% endif %}">Refresh</a>
+</div>
+
+<div class="brokers">
+  {% for tid, t in tenants.items() %}
+  {% set s = stats[tid] %}
+  <a class="box broker" href="/console/brokers/{{ tid }}" style="--b: {{ t.branding.primary }}">
+    <div class="broker__top">
+      <span class="broker__mono" aria-hidden="true">{{ t.branding.monogram }}</span>
+      <div><div class="broker__name">{{ t.name }}</div><div class="broker__key">{{ t.algorithms|join(", ") }}, {{ "JWKS" if t.jwks_url else ("public key" if t.public_key_path else "shared secret") }}</div></div>
+      <span class="pill pill--{{ t.status }} ml-auto">{{ t.status|capitalize }}</span>
+    </div>
+    <dl class="broker__metrics">
+      <div class="metric"><dt>Launches</dt><dd>{{ s.total }}</dd></div>
+      <div class="metric"><dt>Success</dt><dd>{% if s.rate is not none %}{{ "%.0f"|format(s.rate) }}<small>%</small>{% else %}—{% endif %}</dd></div>
+      <div class="metric"><dt>Median</dt><dd>{% if s.p50_latency is not none %}{{ "%.0f"|format(s.p50_latency) }}<small> ms</small>{% else %}—{% endif %}</dd></div>
+    </dl>
+    <div class="broker__foot">
+      <span>Last success {{ s.last_ok|ago }}</span>
+      <span>{% if s.top_codes %}Top error {{ s.top_codes[0][0] }} ×{{ s.top_codes[0][1] }}{% else %}No errors{% endif %}</span>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+
+<section class="box">
+  <div class="box__head">
+    <h2>Recent launches</h2>
+    <div class="filters" aria-label="Filter launches">
+      <a href="/console{% if f_status %}?status={{ f_status }}{% endif %}" {% if not f_tenant %}aria-current="true"{% endif %}>All brokers</a>
+      {% for tid in tenants %}<a href="/console?tenant={{ tid }}{% if f_status %}&status={{ f_status }}{% endif %}" {% if f_tenant == tid %}aria-current="true"{% endif %}>{{ tenants[tid].name }}</a>{% endfor %}
+      <span style="width: 10px"></span>
+      <a href="/console{% if f_tenant %}?tenant={{ f_tenant }}{% endif %}" {% if not f_status %}aria-current="true"{% endif %}>Any result</a>
+      <a href="/console?status=failed{% if f_tenant %}&tenant={{ f_tenant }}{% endif %}" {% if f_status == 'failed' %}aria-current="true"{% endif %}>Failed</a>
+      <a href="/console?status=ok{% if f_tenant %}&tenant={{ f_tenant }}{% endif %}" {% if f_status == 'ok' %}aria-current="true"{% endif %}>Succeeded</a>
+    </div>
+  </div>
+  {% if rows %}
+    {% with show_broker=true %}{% include "console/_launch_rows.html" %}{% endwith %}
+  {% else %}
+    <div class="empty"><strong>No launches yet</strong>Sign in to a broker in the simulator and open Analytics. Each attempt shows up here with its reference.</div>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en"><head>{% include "_head.html" %}<title>Client area · {{ broker.name }}</title></head>
+<body style="--primary: {{ broker.theme.primary }}; --primary-dark: {{ broker.theme.primary_dark }}; --surface-tint: {{ broker.theme.surface }}">
+<div class="shell">
+  <aside class="side">
+    <a class="logo" href="/b/{{ broker.id }}/"><i>{{ broker.theme.monogram }}</i>{{ broker.name }}</a>
+    <nav aria-label="Client area">
+      <a href="/b/{{ broker.id }}/" aria-current="page">Overview</a>
+      <a href="#">Trading accounts</a>
+      <a href="#">Deposit and withdraw</a>
+      <a href="#analytics">Analytics <em>New</em></a>
+      <a href="#">Documents</a>
+      <a href="#">Support</a>
+    </nav>
+    <div class="side__user">
+      <strong>{{ user.name }}</strong>Client ID {{ user.sub }}
+      <form method="post" action="/b/{{ broker.id }}/logout"><button type="submit">Log out</button></form>
+    </div>
+  </aside>
+  <main class="main">
+    <header><h1>Welcome back, {{ user.name.split()[0] }}</h1><p>Here is where your accounts stand today.</p></header>
+    <div class="cards">
+      <section class="card" aria-labelledby="acct-title">
+        <div style="display: flex; justify-content: space-between; align-items: start; gap: 12px">
+          <div><h2 id="acct-title">Account {{ user.account }}</h2><p class="sub">MetaTrader 5, USD</p></div><span class="tag">Live</span>
+        </div>
+        <dl class="acct">
+          <div><dt>Balance</dt><dd>{{ "{:,.2f}".format(user.balance) }} <small>USD</small></dd></div>
+          <div><dt>Equity</dt><dd>{{ "{:,.2f}".format(user.equity) }} <small>USD</small></dd></div>
+          <div><dt>Leverage</dt><dd>{{ user.leverage }}</dd></div>
+        </dl>
+      </section>
+      <section class="card analytics" id="analytics" aria-labelledby="an-title">
+        <h2 id="an-title">Market analytics</h2>
+        <p class="sub">Included with your account</p>
+        <p>Price trends, technical views, client positioning and today's economic calendar for the instruments you trade.</p>
+        <form method="post" action="/b/{{ broker.id }}/launch">
+          <input type="hidden" name="scenario" value="healthy">
+          <button class="btn btn--light" type="submit">Open Analytics</button>
+        </form>
+      </section>
+    </div>
+
+    <section class="lab" aria-labelledby="lab-title">
+      <div class="lab__head">
+        <div>
+          <h2 id="lab-title">Integration lab</h2>
+          <p>Simulator only. Launch with a token that contains a mistake seen in real integrations and check how the portal responds. Each attempt shows up in the portal's integration console.</p>
+        </div>
+        <div class="lab__meta">
+          <span>{{ broker.algorithm }}{% if broker.kid %}, kid <code>{{ broker.kid }}</code>{% endif %}</span>
+          <span>{{ broker.launch_method|upper }} launch</span>
+          {% if broker.kid %}<a href="/b/{{ broker.id }}/.well-known/jwks.json">JWKS</a>{% endif %}
+        </div>
+      </div>
+      <form method="post" action="/b/{{ broker.id }}/launch">
+        <div>
+          <label for="scenario">Token to send</label>
+          <select id="scenario" name="scenario">
+            {% for group, items in groups.items() %}
+            <optgroup label="{{ group }}">
+              {% for s in items %}<option value="{{ s.id }}" data-desc="{{ s.description }}" data-expect="{{ s.expect or 'Signed in' }}" {% if s.id == selected %}selected{% endif %}>{{ s.label }}</option>{% endfor %}
+            </optgroup>
+            {% endfor %}
+          </select>
+        </div>
+        <button class="btn btn--dark" type="submit">Launch with this token</button>
+        <p class="lab__desc" id="scenario-desc" aria-live="polite"></p>
+      </form>
+    </section>
+  </main>
+</div>
+<script>
+  (function () {
+    var select = document.getElementById("scenario");
+    var out = document.getElementById("scenario-desc");
+    function update() {
+      var o = select.options[select.selectedIndex];
+      out.textContent = "";
+      out.append(o.dataset.desc + " Portal should answer: ");
+      var code = document.createElement("code");
+      code.textContent = o.dataset.expect;
+      out.append(code);
+    }
+    select.addEventListener("change", update);
+    update();
+  })();
+</script>
+</body></html>

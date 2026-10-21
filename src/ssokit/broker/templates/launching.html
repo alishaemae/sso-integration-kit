@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en"><head>{% include "_head.html" %}<meta name="referrer" content="no-referrer"><title>Opening Analytics…</title></head>
+<body style="--primary: {{ broker.theme.primary }}">
+<main class="launching">
+  <form id="launch" method="post" action="{{ action }}">
+    <div class="spinner" aria-hidden="true"></div>
+    <p>Opening Analytics…</p>
+    <input type="hidden" name="token" value="{{ token }}">
+    {% if symbol %}<input type="hidden" name="symbol" value="{{ symbol }}">{% endif %}
+    <noscript><button class="btn btn--primary" type="submit">Continue to Analytics</button></noscript>
+  </form>
+</main>
+<script>document.getElementById("launch").submit();</script>
+</body></html>

@@ -1,0 +1,19 @@
+<table class="tbl">
+  <thead><tr>
+    <th scope="col">Time (UTC)</th><th scope="col">Reference</th>{% if show_broker %}<th scope="col">Broker</th>{% endif %}
+    <th scope="col">Result</th><th scope="col" class="hide-sm">Client</th><th scope="col" class="hide-sm">Method</th><th scope="col" class="num hide-sm">Latency</th>
+  </tr></thead>
+  <tbody>
+  {% for a in rows %}
+    <tr>
+      <td class="dim" title="{{ a.ts|ts }}">{{ (a.ts|ts)[11:19] }}</td>
+      <td><a class="ref" href="/console/launches/{{ a.ref }}">{{ a.ref }}</a></td>
+      {% if show_broker %}<td>{{ tenants[a.tenant_id].name if tenants and a.tenant_id in tenants else a.tenant_id }}</td>{% endif %}
+      <td>{% if a.ok %}<span class="result result--ok"><b>OK</b>Signed in</span>{% else %}<span class="result result--fail"><b>{{ a.code or "ERR" }}</b>{{ a.title }}</span>{% endif %}</td>
+      <td class="hide-sm mono">{{ a.subject or "—" }}</td>
+      <td class="hide-sm dim">{{ a.method }}</td>
+      <td class="num hide-sm dim">{{ "%.0f"|format(a.latency_ms) }} ms</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>

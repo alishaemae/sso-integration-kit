@@ -1,0 +1,124 @@
+{% extends "app_layout.html" %}
+{% block title %}{{ focus.instrument.symbol }} {{ focus.fmt(focus.last) }}{% endblock %}
+{% block body %}
+{% set b = brand %}
+<header class="topbar">
+  <div class="topbar__inner">
+    <a class="brandmark" href="/app">
+      <span class="monogram" aria-hidden="true">{{ b.monogram or b.display_name[:1] }}</span>
+      <span class="brandmark__name">{{ b.display_name }}<span class="brandmark__product">Market analytics</span></span>
+    </a>
+    <nav class="topnav" aria-label="Sections">
+      <a href="#markets" aria-current="page">Markets</a>
+      <a href="#calendar">Calendar</a>
+    </nav>
+    <div class="account">
+      <div class="account__who">
+        <strong>{{ session.name or "Client " ~ session.sub }}</strong>
+        <span>{% if session.account %}Account {{ session.account }}{% else %}Client ID {{ session.sub }}{% endif %}</span>
+      </div>
+      <form method="post" action="/app/sign-out">
+        <button class="btn btn--ghost btn--small" type="submit">Back to {{ b.display_name }}</button>
+      </form>
+    </div>
+  </div>
+</header>
+
+<main class="page" id="markets">
+  {% set f = focus %}
+  {% set dir = "up" if f.change >= 0 else "down" %}
+  <section class="panel focus" aria-labelledby="focus-title">
+    <div class="focus__main">
+      <ul class="symbols" aria-label="Instruments">
+        {% for sym in snaps %}
+        <li><a href="/app?symbol={{ sym }}" {% if sym == f.instrument.symbol %}aria-current="true"{% endif %}>{{ sym }}</a></li>
+        {% endfor %}
+      </ul>
+      <div class="quote">
+        <span class="quote__name" id="focus-title">{{ f.instrument.name }}, last 24 hours</span>
+        <span class="quote__price">{{ f.fmt(f.last) }}</span>
+        <span class="chg {{ dir }}">{{ "%+.2f"|format(f.change_pct) }}% &nbsp;{{ "+" if f.change >= 0 else "−" }}{{ f.fmt(f.change|abs) }}</span>
+      </div>
+      <div class="chart">
+        <svg viewBox="0 0 824 260" role="img" aria-label="{{ f.instrument.symbol }} price over the last 24 hours, from {{ f.fmt(f.series[0]) }} to {{ f.fmt(f.last) }}">
+          <defs>
+            <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="{{ b.primary }}" stop-opacity=".18"/>
+              <stop offset="1" stop-color="{{ b.primary }}" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <g class="grid">
+            {% for g in chart.grid %}
+            <line x1="0" x2="760" y1="{{ g.y }}" y2="{{ g.y }}"/>
+            <text x="772" y="{{ g.y + 4 }}">{{ f.fmt(g.value) }}</text>
+            {% endfor %}
+          </g>
+          <path d="{{ chart.area }}" fill="url(#fill)"/>
+          <path class="line" d="{{ chart.line }}"/>
+          <circle class="last" cx="{{ chart.last[0] }}" cy="{{ chart.last[1] }}" r="4.5"/>
+        </svg>
+        <div class="chart__axis" aria-hidden="true">
+          {% for i in [0, 24, 48, 72, 95] %}<span>{{ f.times[i]|hm }}</span>{% endfor %}
+        </div>
+      </div>
+    </div>
+    <aside class="focus__side" aria-label="{{ f.instrument.symbol }} summary">
+      <dl class="stat-pair">
+        <div class="stat"><dt>24h high</dt><dd>{{ f.fmt(f.high) }}</dd></div>
+        <div class="stat"><dt>24h low</dt><dd>{{ f.fmt(f.low) }}</dd></div>
+        <div class="stat"><dt>Open</dt><dd>{{ f.fmt(f.series[0]) }}</dd></div>
+        <div class="stat"><dt>Range</dt><dd>{{ "%.2f"|format((f.high - f.low) / f.low * 100) }}%</dd></div>
+        <div class="stat"><dt>RSI (14)</dt><dd>{{ "%.1f"|format(f.rsi) }}</dd></div>
+        <div class="stat"><dt>Technical view</dt><dd><span class="signal signal--{{ f.signal }}">{{ f.signal }}</span></dd></div>
+      </dl>
+      <div class="sentiment">
+        <div class="stat"><dt>Client positioning at {{ b.display_name }}</dt></div>
+        <div class="sentiment__bar" role="img" aria-label="{{ f.long_pct }}% long, {{ 100 - f.long_pct }}% short"><span style="width: {{ f.long_pct }}%"></span></div>
+        <div class="sentiment__legend"><span><b>{{ f.long_pct }}%</b> long</span><span><b>{{ 100 - f.long_pct }}%</b> short</span></div>
+      </div>
+      <a class="btn btn--brand" href="/app/trade/{{ f.instrument.symbol }}">Trade {{ f.instrument.symbol }} in WebTrader</a>
+    </aside>
+  </section>
+
+  <div class="grid-2">
+    <section class="panel" aria-labelledby="wl-title">
+      <div class="panel__head"><h2 id="wl-title">Watchlist</h2><p>15-minute data, 24 hours</p></div>
+      <table class="table">
+        <thead><tr><th scope="col">Instrument</th><th scope="col" class="col-spark"><span class="sr-only">Trend</span></th><th scope="col" class="num">Last</th><th scope="col" class="num">Change</th><th scope="col" class="col-signal">View</th><th scope="col"><span class="sr-only">Trade</span></th></tr></thead>
+        <tbody>
+        {% for sym, s in snaps.items() %}
+          {% set d = "up" if s.change >= 0 else "down" %}
+          <tr>
+            <td><a class="sym" href="/app?symbol={{ sym }}">{{ sym }}</a><span class="sym-name">{{ s.instrument.name }}</span></td>
+            <td class="col-spark"><svg class="spark" viewBox="0 0 120 34" aria-hidden="true"><path d="{{ sparks[sym].line }}" stroke="{{ 'var(--up)' if d == 'up' else 'var(--down)' }}"/></svg></td>
+            <td class="num">{{ s.fmt(s.last) }}</td>
+            <td class="num {{ d }}">{{ "%+.2f"|format(s.change_pct) }}%</td>
+            <td class="col-signal"><span class="signal signal--{{ s.signal }}">{{ s.signal }}</span></td>
+            <td class="num"><a class="trade-link" href="/app/trade/{{ sym }}">Trade</a></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="panel" id="calendar" aria-labelledby="cal-title">
+      <div class="panel__head"><h2 id="cal-title">Economic calendar</h2><p>{{ now.strftime("%A, %d %B") }}, UTC</p></div>
+      <ul class="calendar">
+        {% for e in calendar %}
+        <li>
+          <time datetime="{{ e.time.isoformat() }}">{{ e.time|hm }}</time>
+          <span class="ccy">{{ e.currency }}</span>
+          <span>{{ e.title }}<span class="impact" role="img" aria-label="Impact {{ e.impact }} of 3">{% for i in range(3) %}<i class="{{ 'on' if i < e.impact }}"></i>{% endfor %}</span></span>
+          <span class="calendar__fc">{% if e.forecast %}Fcst <b>{{ e.forecast }}</b> &nbsp;Prev {{ e.previous }}{% endif %}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+  </div>
+
+  <p class="footnote">
+    <span>Analytics for {{ b.display_name }} clients, provided by Lumen. Prices are indicative and for information only.</span>
+    <span>Session {{ session.ref }}</span>
+  </p>
+</main>
+{% endblock %}

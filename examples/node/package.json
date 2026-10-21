@@ -1,0 +1,11 @@
+{
+  "name": "lumen-sso-launch-example",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Broker-side token generation for the Lumen Analytics SSO launch",
+  "type": "module",
+  "main": "lumen-sso.js",
+  "scripts": { "token": "node lumen-sso.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": { "jsonwebtoken": "^9.0.2" }
+}

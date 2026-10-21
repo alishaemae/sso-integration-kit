@@ -1,0 +1,101 @@
+{% set pe = report.primary_error %}
+{% set tl = timeline(report) %}
+{% set labels = {"invalid": "Rejected", "valid": "Accepted", "valid-with-warnings": "Accepted with warnings", "unverified": "Decoded, signature not checked"} %}
+<section class="verdict verdict--{{ report.verdict }}">
+  <div class="verdict__body">
+    <div class="verdict__label">{{ labels[report.verdict] }}</div>
+    {% if pe %}
+      <div class="verdict__title"><code>{{ pe.code }}</code>{{ pe.title|md }}</div>
+      <p class="verdict__hint">{% if pe.detail %}{{ pe.detail|md }} {% endif %}{{ pe.hint|md }}</p>
+    {% elif report.verdict == 'unverified' %}
+      <div class="verdict__title">Contents look right</div>
+      <p class="verdict__hint">Pick a broker to verify the signature with its configured key.</p>
+    {% else %}
+      <div class="verdict__title">Token passes every check</div>
+      <p class="verdict__hint">Signature, claims and validity window are all within the broker's policy.</p>
+    {% endif %}
+  </div>
+</section>
+
+{% if segments %}
+<section class="box">
+  <div class="box__head"><h2>Token</h2><span class="dim" style="color: var(--muted); font-size: 12.5px">{{ segments|join('.')|length }} characters</span></div>
+  <div class="box__body">
+    {% if segments|length == 3 %}
+    <pre class="token"><span class="h">{{ segments[0] }}</span><span class="dot">.</span><span class="p">{{ segments[1] }}</span><span class="dot">.</span><span class="s">{{ segments[2] }}</span></pre>
+    <div class="token-legend"><span style="--c: var(--seg-header)">Header</span><span style="--c: var(--seg-payload)">Payload</span><span style="--c: var(--seg-sig)">Signature</span></div>
+    {% else %}
+    <pre class="token">{{ segments|join('.') }}</pre>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
+{% if tl %}
+{% set time_err = pe and pe.code in ["SSO-130", "SSO-131", "SSO-132", "SSO-133", "SSO-134"] %}
+<section class="box">
+  <div class="box__head"><h2>Validity window</h2><span style="color: var(--muted); font-size: 12.5px">Verifier clock {{ tl.now_label }} UTC, leeway {{ report.timeline.leeway }}s</span></div>
+  <div class="box__body">
+    <div class="tl {% if time_err %}tl--bad{% endif %}" role="img" aria-label="Token time claims compared with the verifier's clock">
+      <div class="tl__axis"></div>
+      {% if tl.window %}
+        <div class="tl__win" style="left: {{ tl.window.left }}%; width: {{ tl.window.width }}%"></div>
+        {% if tl.window.grace %}<div class="tl__grace" style="left: {{ tl.window.left + tl.window.width }}%; width: {{ tl.window.grace }}%"></div>{% endif %}
+      {% endif %}
+      {% for m in tl.marks %}
+        <div class="tl__mark {% if m.row %}tl__mark--row1{% endif %}" style="left: {{ m.pos }}%"><b>{{ m.name }}</b><span>{{ m.rel }}</span></div>
+      {% endfor %}
+      <div class="tl__now" style="left: {{ tl.now }}%"><span>now</span></div>
+    </div>
+    <p class="tl__legend">The bar is the period the token claims to be valid. The striped end is the clock-skew leeway the portal grants. A token is accepted only while <em>now</em> sits inside it.</p>
+  </div>
+</section>
+{% endif %}
+
+<section class="box">
+  <div class="box__head"><h2>Checks</h2>
+    <span style="color: var(--muted); font-size: 12.5px">{{ plural(report.findings|selectattr('severity', 'equalto', 'error')|list|length, 'error') }}, {{ plural(report.findings|selectattr('severity', 'equalto', 'warning')|list|length, 'warning') }}</span></div>
+  <div class="box__body">
+    <ul class="checks">
+      {% set icons = {"error": "!", "warning": "!", "info": "i", "pass": "✓"} %}
+      {% for f in report.findings %}
+      <li>
+        <span class="ic ic--{{ f.severity }}" aria-label="{{ f.severity }}">{{ icons[f.severity] }}</span>
+        <div>
+          <strong>{{ f.title|md }}</strong>{% if f.code %}<span class="code">{{ f.code }}</span>{% endif %}
+          {% if f.detail %}<p>{{ f.detail|md }}</p>{% endif %}
+          {% if f.hint and f.severity != 'pass' %}<p class="hint">{{ f.hint|md }}</p>{% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+
+{% if report.header or report.payload %}
+{% set notes = {"sub": "Client identifier", "iss": "Issuer", "aud": "Audience", "jti": "Single-use token ID", "name": "Display name", "account_id": "Trading account", "kid": "Key ID", "alg": "Signing algorithm", "typ": "Token type"} %}
+<div class="two section">
+  <section class="box">
+    <div class="box__head"><h2>Payload</h2></div>
+    <div class="box__body">
+      <table class="claims"><tbody>
+      {% for k, v in (report.payload or {}).items() %}
+        <tr><th scope="row">{{ k }}</th><td><span class="v">{{ v|tojson }}</span>
+          {% if k in ["iat", "exp", "nbf"] and v is number and v < 100000000000 %}<span class="note">{{ v|ts }}</span>
+          {% elif k in notes %}<span class="note">{{ notes[k] }}</span>{% endif %}</td></tr>
+      {% endfor %}
+      </tbody></table>
+    </div>
+  </section>
+  <section class="box">
+    <div class="box__head"><h2>Header</h2><span style="color: var(--muted); font-size: 12.5px">{% if report.signature.key %}Key: {{ report.signature.key }}{% endif %}</span></div>
+    <div class="box__body">
+      <table class="claims claims--header"><tbody>
+      {% for k, v in (report.header or {}).items() %}
+        <tr><th scope="row">{{ k }}</th><td><span class="v">{{ v|tojson }}</span>{% if k in notes %}<span class="note">{{ notes[k] }}</span>{% endif %}</td></tr>
+      {% endfor %}
+      </tbody></table>
+    </div>
+  </section>
+</div>
+{% endif %}

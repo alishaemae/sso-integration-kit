@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><head>{% include "_head.html" %}<title>Broker simulator</title></head>
+<body>
+<main class="picker">
+  <section>
+    <h1>Broker simulator</h1>
+    <p>Two fictional brokers with different setups. Sign in as their client and open Analytics to run a real SSO launch against the portal.</p>
+    <ul>
+      {% for b in brokers.values() %}
+      <li><a href="/b/{{ b.id }}/" style="--c: {{ b.theme.primary }}">
+        <i aria-hidden="true">{{ b.theme.monogram }}</i>
+        <div><strong>{{ b.name }}</strong><span>{{ b.tagline }}</span></div>
+        <small>{{ b.algorithm }}{% if b.kid %} with JWKS{% else %} shared secret{% endif %}<br>{{ b.launch_method|upper }} launch</small>
+      </a></li>
+      {% endfor %}
+    </ul>
+  </section>
+</main>
+</body></html>

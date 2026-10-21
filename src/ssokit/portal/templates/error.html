@@ -1,0 +1,37 @@
+{% extends "app_layout.html" %}
+{% block title %}Sign-in problem{% endblock %}
+{% block body %}
+<main class="notice-wrap">
+  <section class="notice" aria-labelledby="err-title">
+    <span class="monogram" aria-hidden="true">{{ brand.monogram or brand.display_name[:1] }}</span>
+    <h1 id="err-title">We couldn't open Analytics</h1>
+    {% if error.code == "SSO-150" %}
+    <p>This sign-in link has already been used. Links from {{ brand.display_name }} work once, so go back and open Analytics again.</p>
+    {% elif error.code in ("SSO-130", "SSO-133") %}
+    <p>This sign-in link has expired. Go back to {{ brand.display_name }} and open Analytics again to get a fresh one.</p>
+    {% elif tenant is none %}
+    <p>This sign-in link does not point to a broker we know. Open Analytics from your broker's client area.</p>
+    {% else %}
+    <p>{{ brand.display_name }} sent a sign-in request we could not accept. Opening Analytics again usually fixes it. If it keeps happening, contact {{ brand.display_name }} support and quote the reference below.</p>
+    {% endif %}
+    <dl class="refbox">
+      <div><dt>Reference</dt><dd>{{ ref }}</dd></div>
+      <div><dt>Error code</dt><dd>{{ error.code }}</dd></div>
+    </dl>
+    <div class="notice__actions">
+      {% if tenant and brand.return_url %}<a class="btn btn--brand" href="{{ brand.return_url }}">Return to {{ brand.display_name }}</a>{% endif %}
+      {% if tenant and brand.support_email %}<a class="btn btn--ghost" href="mailto:{{ brand.support_email }}?subject=Analytics%20sign-in%20{{ ref }}">Email support</a>{% endif %}
+    </div>
+    <details class="tech">
+      <summary>Details for {{ brand.display_name if tenant else "the" }} technical team</summary>
+      <dl>
+        <dt>Problem</dt><dd>{{ error.title|md }}</dd>
+        {% if finding and finding.detail %}<dt>Found</dt><dd>{{ finding.detail|md }}</dd>{% endif %}
+        <dt>Likely cause</dt><dd>{{ error.cause|md }}</dd>
+        <dt>Fix</dt><dd>{{ (finding.hint if finding and finding.hint else error.fix)|md }}</dd>
+      </dl>
+    </details>
+    <p class="powered">Analytics by Lumen</p>
+  </section>
+</main>
+{% endblock %}

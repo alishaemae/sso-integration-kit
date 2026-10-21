@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.env
+.pytest_cache/
+.ruff_cache/
+build/
+dist/
+keys/
+*.pem
+examples/node/node_modules/
+examples/node/package-lock.json
+examples/php/vendor/
+examples/php/composer.lock

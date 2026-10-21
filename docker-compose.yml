@@ -1,0 +1,40 @@
+x-env: &env
+  PORTAL_PUBLIC_URL: http://localhost:8000
+  BROKER_PUBLIC_URL: http://localhost:8001
+  BROKER_INTERNAL_URL: http://broker:8001
+  VEGA_SSO_SECRET: ${VEGA_SSO_SECRET:?set VEGA_SSO_SECRET in .env, see README}
+
+services:
+  portal:
+    build: .
+    command: uvicorn ssokit.portal.app:get_app --factory --host 0.0.0.0 --port 8000 --proxy-headers
+    ports: ["8000:8000"]
+    environment:
+      <<: *env
+      CONSOLE_PASSWORD: ${CONSOLE_PASSWORD:-console}
+      PORTAL_SESSION_SECRET: ${PORTAL_SESSION_SECRET:-}
+    depends_on:
+      broker: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  broker:
+    build: .
+    command: uvicorn ssokit.broker.app:get_app --factory --host 0.0.0.0 --port 8001
+    ports: ["8001:8001"]
+    environment:
+      <<: *env
+      SSOKIT_KEYS_DIR: /app/keys
+    volumes:
+      - broker-keys:/app/keys
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/healthz')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  broker-keys:

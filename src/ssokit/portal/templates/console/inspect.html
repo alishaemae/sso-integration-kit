@@ -1,0 +1,32 @@
+{% extends "console/layout.html" %}
+{% block title %}Token inspector{% endblock %}
+{% block content %}
+<div class="cpage__head">
+  <div><h1>Token inspector</h1><p>Paste a token from a broker's logs or a failing request to see exactly what the portal thinks of it.</p></div>
+</div>
+<form class="box" method="post" action="/console/inspect">
+  <div class="box__body inspect-form">
+    <div class="field" style="margin: 0">
+      <label for="token">Token</label>
+      <textarea id="token" name="token" spellcheck="false" autocomplete="off" placeholder="eyJhbGciOi..." required>{{ token }}</textarea>
+      <small>Tokens stay in this request only and are not stored.</small>
+    </div>
+    <div>
+      <div class="field">
+        <label for="tenant">Verify as</label>
+        <select id="tenant" name="tenant">
+          {% for tid, t in tenants.items() %}<option value="{{ tid }}" {% if tid == tenant_id %}selected{% endif %}>{{ t.name }} ({{ t.algorithms|join(", ") }})</option>{% endfor %}
+          <option value="" {% if tenant_id == '' %}selected{% endif %}>Decode only, no broker</option>
+        </select>
+        <small>Uses that broker's keys, issuer, audience and time policy.</small>
+      </div>
+      <button class="btn btn--primary" type="submit" style="width: 100%">Inspect token</button>
+    </div>
+  </div>
+</form>
+{% if report %}
+<div style="margin-top: 20px; display: grid; gap: 20px">
+{% with segments=token.strip().split('.') if token.strip() else [] %}{% include "console/_report.html" %}{% endwith %}
+</div>
+{% endif %}
+{% endblock %}

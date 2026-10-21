@@ -1,0 +1,53 @@
+{% extends "console/layout.html" %}
+{% block title %}{{ tenant.name }}{% endblock %}
+{% block content %}
+{% set done = checklist|selectattr(1)|list|length %}
+<div class="cpage__head">
+  <div>
+    <div class="crumb"><a href="/console">Launches</a> / Brokers</div>
+    <h1>{{ tenant.name }} <span class="pill pill--{{ tenant.status }}" style="vertical-align: 4px">{{ tenant.status|capitalize }}</span></h1>
+    <p>Integration sheet and launch readiness. Share the sheet with the broker's developers at kickoff.</p>
+  </div>
+  <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap">
+    <nav class="filters" aria-label="Brokers">{% for tid, t in tenants.items() %}<a href="/console/brokers/{{ tid }}" {% if tid == tenant.id %}aria-current="true"{% endif %}>{{ t.name }}</a>{% endfor %}</nav>
+    <a class="btn" href="/console/brokers/{{ tenant.id }}">Re-check keys</a>
+  </div>
+</div>
+<div class="layout-side">
+  <section class="box">
+    <div class="box__head"><h2>Integration sheet</h2></div>
+    <div class="box__body">
+      <dl class="sheet">
+        <dt>Launch URL</dt><dd class="mono">{{ launch_url }}</dd>
+        <dt>Method</dt><dd>POST form field <code>token</code> (GET <code>?token=</code> also accepted)</dd>
+        <dt>Algorithm</dt><dd>{{ tenant.algorithms|join(", ") }}</dd>
+        <dt>Keys</dt><dd class="mono">{{ tenant.key_source }}</dd>
+        <dt>Issuer <code>iss</code></dt><dd class="mono">{{ tenant.issuer }}</dd>
+        <dt>Audience <code>aud</code></dt><dd class="mono">{{ tenant.audience }}</dd>
+        <dt>Required claims</dt><dd>{% for c in tenant.required_claims %}<code>{{ c }}</code> {% endfor %}</dd>
+        <dt>Optional claims</dt><dd><code>name</code> <code>account_id</code> (shown in the portal header)</dd>
+        <dt>Clock leeway</dt><dd>{{ tenant.leeway }} s</dd>
+        <dt>Max token age</dt><dd>{{ tenant.max_age }} s after <code>iat</code></dd>
+        <dt>Max lifetime</dt><dd>{{ tenant.max_lifetime }} s (<code>exp − iat</code>)</dd>
+        <dt>WebTrader link</dt><dd class="mono">{{ tenant.webtrader_url or "not configured" }}</dd>
+      </dl>
+    </div>
+  </section>
+  <section class="box">
+    <div class="box__head"><h2>Launch readiness</h2><span style="color: var(--muted); font-size: 12.5px">{{ done }} of {{ checklist|length }}</span></div>
+    <div class="box__body">
+      <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="{{ checklist|length }}" aria-valuenow="{{ done }}"><span style="width: {{ (done / checklist|length * 100)|round }}%"></span></div>
+      <ul class="checklist" style="margin-top: 8px">
+        {% for title, ok, detail in checklist %}
+        <li class="{{ 'done' if ok }}"><span class="tick" aria-hidden="true">{{ '✓' if ok }}</span><div><strong>{{ title }}</strong><span class="sr-only">{{ ' (done)' if ok else ' (to do)' }}</span><p>{{ detail }}</p></div></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+</div>
+<section class="box" style="margin-top: 20px">
+  <div class="box__head"><h2>Recent launches</h2><a href="/console?tenant={{ tenant.id }}" style="font-size: 13px">View all</a></div>
+  {% if recent %}{% with rows=recent, show_broker=false %}{% include "console/_launch_rows.html" %}{% endwith %}
+  {% else %}<div class="empty"><strong>No launches from {{ tenant.name }} yet</strong>When their developers send the first token it will appear here.</div>{% endif %}
+</section>
+{% endblock %}

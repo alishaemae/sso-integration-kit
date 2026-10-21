@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: ruff check src tests scripts
+      - run: python scripts/gen_error_docs.py --check
+      - run: pytest
+
+  examples:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate a throwaway HS256 secret
+        run: echo "VEGA_SSO_SECRET=$(openssl rand -base64 33)" >> "$GITHUB_ENV"
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: "8.3", tools: composer }
+      - run: pip install -e .
+      - name: Node example passes the portal's rules
+        working-directory: examples/node
+        run: |
+          npm install --no-audit --no-fund
+          jwt-doctor check "$(LUMEN_SSO_SECRET=$VEGA_SSO_SECRET node lumen-sso.js 58201)" --tenant vega --config ../../config/tenants.toml
+      - name: PHP example passes the portal's rules
+        working-directory: examples/php
+        run: |
+          composer install --no-interaction --quiet
+          jwt-doctor check "$(LUMEN_SSO_SECRET=$VEGA_SSO_SECRET php launch.php 58201)" --tenant vega --config ../../config/tenants.toml
+      - name: Python example passes the portal's rules
+        run: jwt-doctor check "$(LUMEN_SSO_SECRET=$VEGA_SSO_SECRET python examples/python/lumen_sso.py)" --tenant vega
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "VEGA_SSO_SECRET=$(openssl rand -base64 33)" > .env
+      - run: docker compose up --build --detach --wait
+      - run: curl --fail http://localhost:8000/healthz && curl --fail http://localhost:8001/b/orbis/.well-known/jwks.json
+      - if: always()
+        run: docker compose logs && docker compose down

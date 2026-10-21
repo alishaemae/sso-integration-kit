@@ -1,0 +1,18 @@
+{% extends "app_layout.html" %}
+{% block title %}Lumen Analytics{% endblock %}
+{% block body %}
+<main class="notice-wrap">
+  <section class="notice">
+    <span class="monogram" aria-hidden="true">L</span>
+    <h1>Lumen Analytics opens from your broker</h1>
+    <p>There is no separate password. Sign in to your broker's client area and choose Analytics, and you will land here already signed in.</p>
+    <ul class="broker-list" aria-label="Connected brokers">
+      {% for t in tenants.values() %}
+      <li><a href="{{ t.branding.return_url or '#' }}" style="--brand: {{ t.branding.primary }}">
+        <span class="monogram" aria-hidden="true">{{ t.branding.monogram }}</span>{{ t.name }}<span>Sign in with {{ t.name }}</span></a></li>
+      {% endfor %}
+    </ul>
+    <div class="notice__actions"><a class="btn btn--ghost" href="/console">Integration console</a></div>
+  </section>
+</main>
+{% endblock %}

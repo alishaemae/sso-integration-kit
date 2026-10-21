@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en"><head>{% include "_head.html" %}<title>{{ symbol }} · WebTrader · {{ broker.name }}</title></head>
+<body class="wt">
+<header><strong>{{ broker.name }} WebTrader</strong><span>{{ symbol }}</span><span style="margin-left: auto; font-size: 13px">{{ user.name if user else "Not signed in" }}</span></header>
+<main>
+  <div class="chartarea"><div style="text-align: center"><b>{{ symbol }}</b>Chart opened from the Analytics deep link</div></div>
+  <aside>
+    <strong>New order</strong>
+    <div class="row"><button class="sell" disabled>Sell</button><button class="buy" disabled>Buy</button></div>
+    <p class="note">Simulator page. The portal logged this deep link, which ticks "WebTrader deep link opened" on the broker's launch readiness checklist.</p>
+  </aside>
+</main>
+</body></html>

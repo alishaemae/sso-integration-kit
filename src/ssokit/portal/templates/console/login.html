@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  {% include "_head.html" %}
+  <title>Sign in · Lumen integrations</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='console.css') }}">
+</head>
+<body>
+<main class="login">
+  <form class="box" method="post" action="/console/login">
+    <div class="cnav__brand" style="color: var(--ink)"><i style="background: var(--nav); color: #fff">L</i>Lumen</div>
+    <h1>Integration console</h1>
+    <p>Launch logs, broker setup and the token inspector.</p>
+    {% if error %}<div class="err" role="alert">{{ error }}</div>{% endif %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <div class="field">
+      <label for="pw">Console password</label>
+      <input id="pw" type="password" name="password" autocomplete="current-password" autofocus required>
+    </div>
+    <button class="btn btn--primary" type="submit" style="width: 100%">Sign in</button>
+  </form>
+</main>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en"><head>{% include "_head.html" %}<title>Sign in · {{ broker.name }}</title></head>
+<body style="--primary: {{ broker.theme.primary }}; --primary-dark: {{ broker.theme.primary_dark }}; --surface-tint: {{ broker.theme.surface }}">
+<main class="auth">
+  <section class="auth__brand">
+    <a class="logo" href="/" style="padding: 0"><i>{{ broker.theme.monogram }}</i>{{ broker.name }}</a>
+    <div><h1>Your markets, one client area.</h1><p>{{ broker.tagline }}. Manage accounts, funding and research in one place.</p></div>
+    <p style="font-size: 12.5px">Fictional broker used by the SSO integration kit.</p>
+  </section>
+  <section class="auth__form">
+    <form method="post" action="/b/{{ broker.id }}/login">
+      <h2>Sign in</h2>
+      <p>Use your client area credentials.</p>
+      {% if error %}<div class="err" role="alert">{{ error }}</div>{% endif %}
+      <div class="f"><label for="email">Email</label><input id="email" name="email" type="email" value="{{ user.email }}" autocomplete="username" required></div>
+      <div class="f"><label for="password">Password</label><input id="password" name="password" type="password" value="demo" autocomplete="current-password" required></div>
+      <button class="btn btn--primary" type="submit" style="width: 100%">Sign in</button>
+      <p class="demo-note">Demo account is prefilled: {{ user.email }}, password <code>demo</code>.</p>
+    </form>
+  </section>
+</main>
+</body></html>

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  {% include "_head.html" %}
+  <title>{% block title %}Console{% endblock %} · Lumen integrations</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='console.css') }}">
+</head>
+<body>
+<header class="cnav">
+  <div class="cnav__inner">
+    <a class="cnav__brand" href="/console"><i>L</i>Lumen <span>Integration console</span></a>
+    <nav aria-label="Console">
+      <a href="/console" {% if nav == 'overview' %}aria-current="page"{% endif %}>Launches</a>
+      <a href="/console/brokers/{{ broker_ids[0] }}" {% if nav == 'brokers' %}aria-current="page"{% endif %}>Brokers</a>
+      <a href="/console/inspect" {% if nav == 'inspect' %}aria-current="page"{% endif %}>Token inspector</a>
+    </nav>
+    <form method="post" action="/console/logout"><button type="submit">Sign out</button></form>
+  </div>
+</header>
+<main class="cpage">
+{% block content %}{% endblock %}
+</main>
+</body>
+</html>

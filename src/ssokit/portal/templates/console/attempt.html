@@ -1,0 +1,27 @@
+{% extends "console/layout.html" %}
+{% block title %}{{ a.ref }}{% endblock %}
+{% block content %}
+<div class="cpage__head">
+  <div>
+    <div class="crumb"><a href="/console">Launches</a> / {% if tenant %}<a href="/console/brokers/{{ tenant.id }}">{{ tenant.name }}</a>{% else %}{{ a.tenant_id }}{% endif %}</div>
+    <h1 class="mono">{{ a.ref }}</h1>
+  </div>
+  <a class="btn" href="/console?tenant={{ a.tenant_id }}">All launches for {{ tenant.name if tenant else a.tenant_id }}</a>
+</div>
+<section class="box">
+  <div class="box__body">
+    <dl class="meta">
+      <div><dt>Received</dt><dd>{{ a.ts|ts }}</dd></div>
+      <div><dt>Broker</dt><dd>{{ tenant.name if tenant else a.tenant_id }}</dd></div>
+      <div><dt>Client</dt><dd class="mono">{{ a.subject or "—" }}</dd></div>
+      <div><dt>Method</dt><dd>{{ a.method }}</dd></div>
+      <div><dt>Latency</dt><dd>{{ "%.1f"|format(a.latency_ms) }} ms</dd></div>
+      <div><dt>Client IP</dt><dd class="mono">{{ a.ip }}</dd></div>
+      <div style="grid-column: 1 / -1"><dt>User agent</dt><dd style="color: var(--muted)">{{ a.user_agent or "—" }}</dd></div>
+    </dl>
+  </div>
+</section>
+<div class="section" style="margin-top: 20px; display: grid; gap: 20px">
+{% with segments=a.segments %}{% include "console/_report.html" %}{% endwith %}
+</div>
+{% endblock %}

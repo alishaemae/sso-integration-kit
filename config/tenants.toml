@@ -1,0 +1,39 @@
+[tenants.orbis]
+name = "Orbis Capital"
+status = "live"
+issuer = "https://clients.orbis-capital.example"
+audience = "lumen-analytics"
+algorithms = ["RS256"]
+jwks_url = "${BROKER_INTERNAL_URL:-http://127.0.0.1:8001}/b/orbis/.well-known/jwks.json"
+webtrader_url = "${BROKER_PUBLIC_URL:-http://localhost:8001}/b/orbis/webtrader?symbol={symbol}"
+leeway = 30
+max_age = 120
+max_lifetime = 300
+
+[tenants.orbis.branding]
+display_name = "Orbis Capital"
+primary = "#0B6E64"
+on_primary = "#FFFFFF"
+monogram = "OC"
+return_url = "${BROKER_PUBLIC_URL:-http://localhost:8001}/b/orbis/"
+support_email = "integrations@orbis-capital.example"
+
+[tenants.vega]
+name = "Vega Markets"
+status = "testing"
+issuer = "https://my.vegamarkets.example"
+audience = "lumen-analytics"
+algorithms = ["HS256"]
+secret_env = "VEGA_SSO_SECRET"
+webtrader_url = "${BROKER_PUBLIC_URL:-http://localhost:8001}/b/vega/webtrader?symbol={symbol}"
+leeway = 30
+max_age = 120
+max_lifetime = 300
+
+[tenants.vega.branding]
+display_name = "Vega Markets"
+primary = "#4B3BB8"
+on_primary = "#FFFFFF"
+monogram = "V"
+return_url = "${BROKER_PUBLIC_URL:-http://localhost:8001}/b/vega/"
+support_email = "dev@vegamarkets.example"

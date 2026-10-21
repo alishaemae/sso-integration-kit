@@ -1,0 +1,8 @@
+{
+  "name": "example/lumen-sso-launch",
+  "description": "Broker-side token generation for the Lumen Analytics SSO launch",
+  "require": {
+    "php": ">=8.1",
+    "firebase/php-jwt": "^6.10"
+  }
+}
